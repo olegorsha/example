@@ -1,4 +1,4 @@
-package example.monads.tutorial;
+package example.monads;
 
 import java.util.ArrayList;
 import java.util.List;

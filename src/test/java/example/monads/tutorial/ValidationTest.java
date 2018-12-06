@@ -1,14 +1,16 @@
 package example.monads.tutorial;
 
+import example.monads.Validation;
+import example.monads.Validator;
 import org.junit.Test;
 
 import java.util.List;
 
-import static example.monads.tutorial.Validation.failure;
-import static example.monads.tutorial.Validation.success;
-import static example.monads.tutorial.ValidationDSL.valid;
-import static example.monads.tutorial.Validator.using;
-import static example.monads.tutorial.Validator.validate;
+import static example.monads.Validation.failure;
+import static example.monads.Validation.success;
+import static example.monads.ValidationDSL.valid;
+import static example.monads.Validator.using;
+import static example.monads.Validator.validate;
 
 public class ValidationTest {
 

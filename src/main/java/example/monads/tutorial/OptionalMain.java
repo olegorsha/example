@@ -4,7 +4,7 @@ package example.monads.tutorial;
 
 import java.util.Optional;
 
-public class Tutorial1 {
+public class OptionalMain {
     public class Person {
         private Optional<Car> car;
 
@@ -50,12 +50,12 @@ public class Tutorial1 {
     }
 
     public static void main(String[] args) {
-        Tutorial1 tutorial1 = new Tutorial1();
+        OptionalMain tutorial1 = new OptionalMain();
 
         Person p = tutorial1.new Person(Optional.of(
                         tutorial1.new Car(Optional.of(
                             tutorial1.new Insurance("name")))));
 
-        System.out.println(Tutorial1.getCarInsurance(Optional.of(p)));
+        System.out.println(OptionalMain.getCarInsurance(Optional.of(p)));
     }
 }

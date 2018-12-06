@@ -1,11 +1,11 @@
-package example.monads.tutorial;
+package example.monads;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
-import static example.monads.tutorial.Validation.Failure.failure;
-import static example.monads.tutorial.Validation.Success.success;
+import static example.monads.Validation.Failure.failure;
+import static example.monads.Validation.Success.success;
 import static java.util.Arrays.asList;
 
 public class ValidationDSL {
