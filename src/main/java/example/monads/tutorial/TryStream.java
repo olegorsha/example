@@ -30,6 +30,7 @@ public class TryStream {
                 .stream()
                 .map(Try::getUnchecked)
                 .forEach(System.out::println);
+
         splited.get(Boolean.FALSE)
                 .stream()
                 .map(t -> Try.ofFailable(() -> t.get())
