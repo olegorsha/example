@@ -1,26 +1,16 @@
 package example.stream;
 
+import one.util.streamex.StreamEx;
+
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.*;
-
-interface User {
-    String name();
-}
-
-interface Department {
-    String title();
-
-    User chief();
-
-    Stream<User> users();
-}
-
-interface Company {
-    Stream<Department> departments();
-}
 
 public class StreamExample {
     public static Stream<Integer> randomizeStream(final int from, final int to) {
@@ -50,18 +40,39 @@ public class StreamExample {
         return list.stream().collect(groupingBy(String::length, joining("+")));
     }
 
-    static Map<User, List<Department>> departmentByChief(Company company) {
-        return company.departments().collect(groupingBy(Department::chief));
+
+//    https://www.youtube.com/watch?v=vxikpWnnnCU&t=308s
+    public static Stream<String> декартовоПроизведение(List<List<String>> list) {
+         return list.get(0).stream().flatMap(a ->
+                 list.get(1).stream().flatMap(b ->
+                  list.get(2).stream().map(c -> a + b + c)));
     }
 
-    static Map<User, List<String>> departmentNameByChief(Company company) {
-        return company.departments().collect(groupingBy(Department::chief, mapping(Department::title, toList())));
+    public static Stream<String> декартовоПроизведение2(List<List<String>> input) {
+        Supplier<Stream<String>> s = input.stream()
+                .<Supplier<Stream<String>>>map(list -> list::stream)
+                .reduce((sup1, sup2) -> () -> sup1.get()
+                .flatMap(e1 -> sup2.get().map(e2 -> e1+e2)))
+                .orElse(() -> Stream.of(""));
+        return s.get();
     }
 
-    static Map<User, Set<User>> supervisors(Company company) {
-        return company.departments().collect(groupingBy(Department::chief, flatMapping(Department::users, toSet())));
+    //Выбрать из стрима все элементы заданного класса
+    public static <T, TT> Stream<TT> select(Stream<T> stream, Class<TT> clazz) {
+        return stream.filter(clazz::isInstance).map(clazz::cast);
     }
 
+    public static <T, TT> Function<T, Stream<TT>> select2(Class<TT> clazz) {
+        return e -> clazz.isInstance(e) ? Stream.of(clazz.cast(e)) : null;
+    }
+
+
+    //Оставить значения, которые повоторяются не менее n раз
+    public static <T> Predicate<T> distinct(long atLeast) {
+        Map<T, Long> map = new ConcurrentHashMap<>();
+        System.out.println("!");
+        return t -> map.merge(t, 1L, Long::sum) == atLeast;
+    }
 
     public static void main(String[] args) {
         randomizeStream(1, 50).forEach(System.out::println);
@@ -71,6 +82,23 @@ public class StreamExample {
                     return aByte;
                 }, LinkedHashMap::new));
         System.out.println((stringByLength(Arrays.asList("a", "bb", "c", "dd", "eee"))));
+
+        List<List<String>> input = Arrays.asList(Arrays.asList("a", "b", "c"), Arrays.asList("x" , "y"), Arrays.asList("1", "2", "3"));
+//        декартовоПроизведение(input).forEach(System.out::println);
+        декартовоПроизведение2(input).forEach(System.out::println);
+
+        Stream<?> ss = Stream.of("aa", 1, 2.2d);
+        select(ss, String.class).forEach(s ->{
+            System.out.println("value=" + s + ", class=" + s.getClass().getName());
+        });
+
+        Stream.of("aa", 1, 2.2d)
+                .flatMap(select2(String.class)).forEach(System.out::println);
+        StreamEx.of("aa", 1, 2.2d)
+                .select(String.class)
+                .forEach(System.out::println);
+        List<String> list = Arrays.asList("1", "1", "2", "2", "2", "3");
+        list.stream().filter(distinct(3)).forEach(System.out::println);
     }
 }
 
