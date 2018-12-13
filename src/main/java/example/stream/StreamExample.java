@@ -1,7 +1,14 @@
 package example.stream;
 
+import example.monads.Try;
 import one.util.streamex.StreamEx;
+import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
@@ -10,9 +17,15 @@ import java.util.function.Supplier;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import static java.nio.charset.Charset.defaultCharset;
+import static java.nio.file.Files.getLastModifiedTime;
 import static java.util.stream.Collectors.*;
+import static org.apache.commons.io.FileUtils.readFileToString;
 
 public class StreamExample {
+
+    final static Logger logger = LogManager.getLogger();
+
     public static Stream<Integer> randomizeStream(final int from, final int to) {
         List<Integer> list = IntStream.range(from, to).boxed().collect(toList());
         Collections.shuffle(list);
@@ -24,12 +37,11 @@ public class StreamExample {
                 .filter(x -> x.startsWith("--"))
                 .findFirst()
                 .isPresent();
-
         return Stream.of(args).anyMatch(x -> x.startsWith("--"));
     }
 
     public static String joinString(List<String> list) {
-        return list.stream().collect(joining());
+        return String.join("", list);
     }
 
     public static int max(List<Integer> list) {
@@ -74,7 +86,52 @@ public class StreamExample {
         return t -> map.merge(t, 1L, Long::sum) == atLeast;
     }
 
-    public static void main(String[] args) {
+    public static void visit(long modifiedTime) {
+        Map<String, File> map = new HashMap<>();
+//        Stream<Try<byte[]>> stream =
+//        map.values()
+
+        Optional<String> first = List.of(new File("/tmp/1.txt"))
+                .stream()
+                .filter(f -> FilenameUtils.getExtension(f.getName()).endsWith("txt"))
+                .filter(f -> Try.of(() -> getLastModifiedTime(f.toPath()).toMillis() > modifiedTime).orElse(false))
+                .map(f -> Try.of(() -> readFileToString(f, defaultCharset())).onFailure(t -> logger.error(t.getMessage())))
+                .map(s -> s.map(DigestUtils::md5Hex).map(String::toUpperCase))
+                .filter(Try::isSuccess)
+                .map(Try::getUnchecked)
+                .findAny();
+
+        if (first.isPresent()) {
+            System.out.println(first);
+        } else {
+            System.out.println("not found");
+        }
+
+    }
+
+
+//    public void visit(ReportEntry entry) throws ExtractPacketMetaInfoException{
+//
+//        for(Map.Entry<String, File> e : entry.getArchivItems().entrySet()){
+//            File f = e.getValue();
+//            String fn = f.getName();
+//            String ext = FilenameUtils.getExtension(fn);
+//            if(!ext.equals("pdf")){
+//                continue;
+//            }
+//            if( f.lastModified() > modifiedTime){
+//                match = entry.getMatch();
+//                modifiedTime = f.lastModified();
+//                try{
+//                    md5sum = MD5Helper.getHashString(IOHelper.readFileAsByteArray(f));
+//                }catch(IOException ex){
+//                    throw new ExtractPacketMetaInfoException(ex);
+//                }
+//            }
+//        }
+//    }
+
+    public static void main(String[] args) throws IOException {
         randomizeStream(1, 50).forEach(System.out::println);
         randomizeStream(1, 10).collect(toCollection(LinkedList::new));
         Map<? extends Class<?>, Byte> collect = randomizeStream(1, 10)
@@ -99,6 +156,8 @@ public class StreamExample {
                 .forEach(System.out::println);
         List<String> list = Arrays.asList("1", "1", "2", "2", "2", "3");
         list.stream().filter(distinct(3)).forEach(System.out::println);
+
+        visit(0);
     }
 }
 

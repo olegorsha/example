@@ -22,7 +22,7 @@ public abstract class Try<T> {
     protected Try() {
     }
 
-    public static <U> Try<U> ofFailable(TrySupplier<U> f) {
+    public static <U> Try<U> of(TrySupplier<U> f) {
         Objects.requireNonNull(f);
 
         try {
@@ -328,7 +328,7 @@ class Failure<T> extends Try<T> {
     @Override
     public Try<T> orElseTry(TrySupplier<T> f) {
         Objects.requireNonNull(f);
-        return Try.ofFailable(f);
+        return Try.of(f);
     }
 
     @Override

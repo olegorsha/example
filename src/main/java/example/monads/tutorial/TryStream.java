@@ -14,9 +14,9 @@ public class TryStream {
     private static Stream<Try<String>> testReadFirstLine5(Stream<String> files) {
 
         return files
-                .map(f -> Try.ofFailable(() -> new FileReader(f))
+                .map(f -> Try.of(() -> new FileReader(f))
                         .map(BufferedReader::new)
-                        .map(r -> Try.ofFailable(() -> r.readLine()).onSuccess(l -> r.close()).get()));
+                        .map(r -> Try.of(() -> r.readLine()).onSuccess(l -> r.close()).get()));
     }
 
     public static void main(String[] args) throws Throwable {
@@ -33,8 +33,8 @@ public class TryStream {
 
         splited.get(Boolean.FALSE)
                 .stream()
-                .map(t -> Try.ofFailable(() -> t.get())
-                        .recoverWith(tt -> Try.ofFailable(() -> tt.getMessage()))
+                .map(t -> Try.of(() -> t.get())
+                        .recoverWith(tt -> Try.of(() -> tt.getMessage()))
                 )
                 .map(Try::getUnchecked)
                 .forEach(System.out::println);
@@ -64,27 +64,27 @@ public class TryStream {
 
     private static Stream<Try<String>> testReadFirstLine4(Stream<String> files) {
         return files
-                .map(fn -> Try.ofFailable(() -> new FileReader(fn)))
+                .map(fn -> Try.of(() -> new FileReader(fn)))
                 .map(t -> {
                     if(t.isSuccess()){
-                        return Try.ofFailable(() -> new BufferedReader(t.getUnchecked()));
+                        return Try.of(() -> new BufferedReader(t.getUnchecked()));
                     }else {
                         final String[] reasonOfFailure = new String[1];
                         t.onFailure(tt -> {
                             reasonOfFailure[0] = tt.getMessage();
                         });
-                        return Try.ofFailable(() -> new BufferedReader(new StringReader(reasonOfFailure[0])));
+                        return Try.of(() -> new BufferedReader(new StringReader(reasonOfFailure[0])));
                     }
                 })
                 .map(t -> {
                     if (t.isSuccess()) {
-                        return Try.ofFailable(() -> t.getUnchecked().readLine());
+                        return Try.of(() -> t.getUnchecked().readLine());
                     } else {
                         final String[] reasonOfFailure = new String[1];
                         t.onFailure(tt -> {
                             reasonOfFailure[0] = tt.getMessage();
                         });
-                        return Try.ofFailable(() -> new String(reasonOfFailure[0]));
+                        return Try.of(() -> new String(reasonOfFailure[0]));
                     }
                 });
     }
@@ -117,19 +117,19 @@ public class TryStream {
 
         return files
                 .map(fn ->
-                        Try.ofFailable(() -> new FileReader(fn))
+                        Try.of(() -> new FileReader(fn))
                                 .map(BufferedReader::new)
                                 .map(BufferedReader::readLine)
                 )
                 .map(t -> {
                     if (t.isSuccess()) {
-                        return Try.ofFailable(() -> t.get());
+                        return Try.of(() -> t.get());
                     } else {
                         final String[] reasonOfFailure = new String[1];
                         t.onFailure(tt -> {
                             reasonOfFailure[0] = tt.getMessage();
                         });
-                        return Try.ofFailable(() -> new String(reasonOfFailure[0]));
+                        return Try.of(() -> new String(reasonOfFailure[0]));
                     }
                 });
     }
