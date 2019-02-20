@@ -14,6 +14,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.stream.Collector;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -53,18 +54,18 @@ public class StreamExample {
     }
 
 
-//    https://www.youtube.com/watch?v=vxikpWnnnCU&t=308s
+    //    https://www.youtube.com/watch?v=vxikpWnnnCU&t=308s
     public static Stream<String> декартовоПроизведение(List<List<String>> list) {
-         return list.get(0).stream().flatMap(a ->
-                 list.get(1).stream().flatMap(b ->
-                  list.get(2).stream().map(c -> a + b + c)));
+        return list.get(0).stream().flatMap(a ->
+                list.get(1).stream().flatMap(b ->
+                        list.get(2).stream().map(c -> a + b + c)));
     }
 
     public static Stream<String> декартовоПроизведение2(List<List<String>> input) {
         Supplier<Stream<String>> s = input.stream()
                 .<Supplier<Stream<String>>>map(list -> list::stream)
                 .reduce((sup1, sup2) -> () -> sup1.get()
-                .flatMap(e1 -> sup2.get().map(e2 -> e1+e2)))
+                        .flatMap(e1 -> sup2.get().map(e2 -> e1 + e2)))
                 .orElse(() -> Stream.of(""));
         return s.get();
     }
@@ -84,6 +85,20 @@ public class StreamExample {
         Map<T, Long> map = new ConcurrentHashMap<>();
         System.out.println("!");
         return t -> map.merge(t, 1L, Long::sum) == atLeast;
+    }
+
+    public static void customCollector() {
+        // Напишем свой аналог toList
+        Collector<String, List<String>, List<String>> toList = Collector.of(
+                ArrayList::new, // метод инициализации аккумулятора
+                List::add, // метод обработки каждого элемента
+                (l1, l2) -> {
+                    l1.addAll(l2);
+                    return l1;
+                } // метод соединения двух аккумуляторов при параллельном выполнении
+        );
+        // Используем его для получение списка строк без дубликатов из стрима
+        List<String> distinct1 = Stream.of("1", "2", "3").distinct().collect(toList);
     }
 
     public static void visit(long modifiedTime) {
@@ -140,12 +155,12 @@ public class StreamExample {
                 }, LinkedHashMap::new));
         System.out.println((stringByLength(Arrays.asList("a", "bb", "c", "dd", "eee"))));
 
-        List<List<String>> input = Arrays.asList(Arrays.asList("a", "b", "c"), Arrays.asList("x" , "y"), Arrays.asList("1", "2", "3"));
+        List<List<String>> input = Arrays.asList(Arrays.asList("a", "b", "c"), Arrays.asList("x", "y"), Arrays.asList("1", "2", "3"));
 //        декартовоПроизведение(input).forEach(System.out::println);
         декартовоПроизведение2(input).forEach(System.out::println);
 
         Stream<?> ss = Stream.of("aa", 1, 2.2d);
-        select(ss, String.class).forEach(s ->{
+        select(ss, String.class).forEach(s -> {
             System.out.println("value=" + s + ", class=" + s.getClass().getName());
         });
 
